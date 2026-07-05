@@ -1,1 +1,1 @@
-export const PACKAGE_NAME = "@griot/slack";
+export { registerListeners } from "./listeners.js";
