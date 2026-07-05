@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Environment — never commit secrets
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Infra / deploy artifacts
+.sst/
+.serverless/
+cdk.out/
+.cdk.staging/
+
+# Local tooling
+.claude/settings.local.json
+
+# OS
+.DS_Store
+
+# Business docs — never public
+docs/

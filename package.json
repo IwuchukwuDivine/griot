@@ -1,0 +1,22 @@
+{
+  "name": "griot",
+  "version": "0.0.0",
+  "private": true,
+  "description": "An AI Slack teammate with institutional memory",
+  "license": "MIT",
+  "author": "Deevyn Ifunanya",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

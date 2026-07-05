@@ -1,0 +1,14 @@
+{
+  "name": "@griot/agent",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Griot's reasoning core — Bedrock-backed chat and retrieval",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit"
+  }
+}
