@@ -18,6 +18,7 @@ cdk.out/
 
 # Local tooling
 .claude/settings.local.json
+tasks/
 
 # OS
 .DS_Store

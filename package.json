@@ -7,16 +7,20 @@
   "author": "Deevyn Ifunanya",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=20"
   },
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
     "build": "npm run build --workspaces",
-    "typecheck": "npm run typecheck --workspaces"
+    "typecheck": "npm run typecheck --workspaces",
+    "dev": "npm run build && node --env-file=.env packages/slack/dist/dev.js",
+    "db:migrate": "npm run build -w @griot/db && node --env-file=.env packages/db/dist/migrate-cli.js"
   },
   "devDependencies": {
+    "@types/node": "^20.17.0",
+    "sst": "^3.17.0",
     "typescript": "^5.8.3"
   }
 }

@@ -9,6 +9,14 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -b",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "@griot/db": "*",
+    "@slack/bolt": "^4.4.0",
+    "pino": "^9.7.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.150"
   }
 }

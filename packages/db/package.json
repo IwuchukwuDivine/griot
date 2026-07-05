@@ -2,13 +2,20 @@
   "name": "@griot/db",
   "version": "0.0.0",
   "private": true,
-  "description": "CockroachDB access layer — schema, queries, and embeddings storage",
+  "description": "CockroachDB access layer — schema, queries, and migrations",
   "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -b",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "pg": "^8.16.0",
+    "pino": "^9.7.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.0"
   }
 }
