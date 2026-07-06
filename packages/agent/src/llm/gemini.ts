@@ -48,23 +48,36 @@ export class GeminiProvider implements LlmProvider {
 
   async complete(opts: CompleteOptions): Promise<string> {
     const model = this.models[opts.model ?? "smart"];
-    const data = (await this.post(`models/${model}:generateContent`, {
+    const body = {
       systemInstruction: { parts: [{ text: opts.system }] },
       contents: [{ role: "user", parts: [{ text: opts.prompt }] }],
-    })) as GenerateContentResponse;
+    };
 
-    const candidate = data.candidates?.[0];
-    const text = candidate?.content?.parts
-      ?.map((part) => part.text ?? "")
-      .join("")
-      .trim();
-    if (!text) {
-      throw new Error(
-        `Gemini returned no completion text (finishReason: ${candidate?.finishReason ?? "unknown"})`,
-      );
+    // Gemini occasionally answers finishReason STOP with an empty candidate;
+    // that slips past the HTTP retry loop, so retry the call once here.
+    for (let attempt = 1; ; attempt++) {
+      const data = (await this.post(
+        `models/${model}:generateContent`,
+        body,
+      )) as GenerateContentResponse;
+
+      const candidate = data.candidates?.[0];
+      const text = candidate?.content?.parts
+        ?.map((part) => part.text ?? "")
+        .join("")
+        .trim();
+      if (text) {
+        logger.debug({ model, chars: text.length }, "gemini completion");
+        return text;
+      }
+      const finishReason = candidate?.finishReason ?? "unknown";
+      if (attempt >= 2) {
+        throw new Error(
+          `Gemini returned no completion text (finishReason: ${finishReason})`,
+        );
+      }
+      logger.warn({ model, finishReason }, "empty gemini completion — retrying");
     }
-    logger.debug({ model, chars: text.length }, "gemini completion");
-    return text;
   }
 
   async embed(text: string): Promise<number[]> {
