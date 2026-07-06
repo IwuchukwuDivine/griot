@@ -7,6 +7,7 @@ import {
   handleDecision,
   handleForget,
   handleLearn,
+  handleResearch,
   handleTodoAdd,
   handleTodoDone,
   handleTodoList,
@@ -191,6 +192,9 @@ async function routeMention(ctx: HandlerContext, text: string): Promise<void> {
       break;
     case "TODO_LIST":
       await handleTodoList(ctx);
+      break;
+    case "RESEARCH":
+      await handleResearch(ctx, text);
       break;
     default:
       await handleAnswer(ctx, text);

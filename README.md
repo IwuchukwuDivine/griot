@@ -19,6 +19,7 @@ Griot lives in your Slack workspace. Teach it how your team works, and it answer
 | `@Griot Ada is to design the flyer by Friday` | Creates a todo with owner and deadline parsed from plain language |
 | `@Griot the flyer is ready` | Matches the message against open todos and closes the right one |
 | `@Griot what's pending?` | Lists open tasks, soonest deadline first |
+| `@Griot research what similar tools charge per seat` | Looks it up with live web search (grounded) and replies with findings plus a Sources line |
 | *(automatic, evening)* | Posts a daily summary in every channel with real activity |
 | *(automatic, morning)* | Posts due-today and overdue task reminders where the tasks were created |
 

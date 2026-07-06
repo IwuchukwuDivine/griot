@@ -1,6 +1,7 @@
 import {
   ANSWER_SYSTEM_PROMPT,
   CONFLICT_SYSTEM_PROMPT,
+  RESEARCH_SYSTEM_PROMPT,
   TODO_DONE_SYSTEM_PROMPT,
   buildAnswerPrompt,
   buildConflictPrompt,
@@ -115,6 +116,20 @@ export async function handleAnswer(
     model: "smart",
   });
   await ctx.reply(answer);
+}
+
+/** RESEARCH: web-grounded findings via the provider's research capability. */
+export async function handleResearch(
+  ctx: HandlerContext,
+  question: string,
+): Promise<void> {
+  const findings = await getLlm().complete({
+    system: RESEARCH_SYSTEM_PROMPT,
+    prompt: question,
+    model: "smart",
+    research: true,
+  });
+  await ctx.reply(findings);
 }
 
 /**
