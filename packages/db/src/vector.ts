@@ -1,4 +1,4 @@
-import { EMBEDDING_DIM } from "@griot/agent";
+import { EMBEDDING_DIM } from "./constants.js";
 
 /**
  * Serializes an embedding for a $n::VECTOR parameter, enforcing the one shared

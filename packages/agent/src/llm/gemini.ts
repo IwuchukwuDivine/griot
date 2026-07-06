@@ -1,4 +1,4 @@
-import { EMBEDDING_DIM } from "../constants.js";
+import { EMBEDDING_DIM } from "@griot/db";
 import { logger } from "../logger.js";
 import { postJsonWithRetry } from "./http.js";
 import type { CompleteOptions, LlmProvider, ModelTier } from "./provider.js";

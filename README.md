@@ -22,7 +22,7 @@ Griot keeps four kinds of memory, all in CockroachDB and all scoped to a Slack w
 | Task | `todos` | Tasks with owners, deadlines, and status |
 | Working | `messages` | A rolling window of recent channel conversation (the bot's own replies included), fed into every answer |
 
-Teach it with `@Griot learn <fact>`; ask it anything with a plain `@Griot <question>` — answers are grounded in the knowledge base plus the recent conversation, and it says so when it doesn't know. Embeddings are 768-dimensional end to end (`EMBEDDING_DIM` in `packages/agent`); the dimension must match the `VECTOR(768)` schema exactly, so change it in one place only.
+Teach it with `@Griot learn <fact>`; ask it anything with a plain `@Griot <question>` — answers are grounded in the knowledge base plus the recent conversation, and it says so when it doesn't know. Embeddings are 768-dimensional end to end (`EMBEDDING_DIM` in `packages/db`); the dimension must match the `VECTOR(768)` schema exactly, so change it in one place only.
 
 ## Setup
 

@@ -12,6 +12,8 @@
     "typecheck": "tsc -b"
   },
   "dependencies": {
+    "@griot/db": "*",
+    "@slack/web-api": "^7.18.0",
     "pino": "^9.7.0"
   }
 }

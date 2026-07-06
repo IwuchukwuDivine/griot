@@ -1,4 +1,4 @@
-export { EMBEDDING_DIM } from "./constants.js";
+export { EMBEDDING_DIM } from "@griot/db";
 export { getLlm } from "./llm/index.js";
 export { GeminiProvider } from "./llm/gemini.js";
 export { BedrockProvider } from "./llm/bedrock.js";
@@ -11,6 +11,7 @@ export {
   ANSWER_SYSTEM_PROMPT,
   CLASSIFY_SYSTEM_PROMPT,
   CONFLICT_SYSTEM_PROMPT,
+  DAILY_SUMMARY_SYSTEM_PROMPT,
   TODO_DONE_SYSTEM_PROMPT,
   buildAnswerPrompt,
   buildConflictPrompt,

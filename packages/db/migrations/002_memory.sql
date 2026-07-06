@@ -1,5 +1,5 @@
 -- The four memory types, all keyed by workspace_id (multi-tenant from day one).
--- VECTOR(768) must match EMBEDDING_DIM in packages/agent/src/constants.ts —
+-- VECTOR(768) must match EMBEDDING_DIM in packages/db/src/constants.ts —
 -- a dimension mismatch doesn't error, it silently breaks retrieval.
 
 -- Semantic memory: taught facts, retrieved by vector similarity (RAG).
