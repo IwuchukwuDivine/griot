@@ -22,7 +22,7 @@ Thanks for your interest! Griot is a young project and contributions are welcome
 - TypeScript strict mode, ESM only
 - Structured logging via pino (no `console.log`)
 - All data access is keyed by `workspace_id` — never write a query that crosses tenants
-- Embedding dimensions are fixed in `packages/agent/src/constants.ts` — schema and queries must import it
+- Embedding dimensions are fixed in `packages/db/src/constants.ts` (`EMBEDDING_DIM`) — schema, seeding, and queries must all use it
 
 ## Reporting bugs
 
