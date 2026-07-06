@@ -16,10 +16,14 @@ export default $config({
     const botToken = new sst.Secret("SlackBotToken");
     const databaseUrl = new sst.Secret("DatabaseUrl");
     const geminiApiKey = new sst.Secret("GeminiApiKey");
+    const slackClientId = new sst.Secret("SlackClientId");
+    const slackClientSecret = new sst.Secret("SlackClientSecret");
 
     const api = new sst.aws.ApiGatewayV2("Api");
 
-    api.route("POST /slack/events", {
+    // One Lambda serves Slack events and the OAuth install flow — the
+    // handler routes the two GET paths itself before Bolt sees anything.
+    const slackFn = new sst.aws.Function("SlackHandler", {
       handler: "packages/slack/src/lambda.handler",
       runtime: "nodejs20.x",
       architecture: "arm64",
@@ -28,8 +32,14 @@ export default $config({
         SLACK_BOT_TOKEN: botToken.value,
         DATABASE_URL: databaseUrl.value,
         GEMINI_API_KEY: geminiApiKey.value,
+        SLACK_CLIENT_ID: slackClientId.value,
+        SLACK_CLIENT_SECRET: slackClientSecret.value,
       },
     });
+
+    api.route("POST /slack/events", slackFn.arn);
+    api.route("GET /slack/install", slackFn.arn);
+    api.route("GET /slack/oauth_redirect", slackFn.arn);
 
     api.route("GET /health", {
       handler: "packages/slack/src/health.handler",
@@ -71,6 +81,9 @@ export default $config({
     return {
       // Paste this into Slack → Event Subscriptions → Request URL
       slackEventsUrl: $interpolate`${api.url}/slack/events`,
+      // "Add to Slack" entrypoint; register the redirect URL in the Slack app
+      installUrl: $interpolate`${api.url}/slack/install`,
+      oauthRedirectUrl: $interpolate`${api.url}/slack/oauth_redirect`,
       healthUrl: $interpolate`${api.url}/health`,
     };
   },
