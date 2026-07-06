@@ -14,7 +14,14 @@
           keeps the rhythm with daily summaries and morning deadline checks.
         </p>
         <div class="hero__ctas">
-          <a :href="slackInstallUrl" class="btn btn--primary">Add to Slack</a>
+          <a
+            :href="slackInstallUrl"
+            class="btn btn--primary"
+            target="_blank"
+            rel="noopener"
+          >
+            Add to Slack
+          </a>
           <a
             :href="GITHUB_URL"
             class="btn btn--outline"

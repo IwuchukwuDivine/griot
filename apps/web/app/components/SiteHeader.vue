@@ -28,7 +28,12 @@
         >
           <Github :size="18" />
         </a>
-        <a :href="slackInstallUrl" class="btn btn--primary site-header__cta">
+        <a
+          :href="slackInstallUrl"
+          class="btn btn--primary site-header__cta"
+          target="_blank"
+          rel="noopener"
+        >
           Add to Slack
         </a>
       </div>
