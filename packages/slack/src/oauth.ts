@@ -24,6 +24,7 @@ const ONBOARDING_MESSAGE = [
   "- Teach me facts: `@Griot learn Our standard rate is $50/hour`",
   "- State decisions — I remember them and flag conflicts with what you taught me earlier",
   "- Assign todos in plain language: `@Griot Ada is to design the flyer by Friday`",
+  "- Ask me to research anything: `@Griot research what similar tools charge` — I'll search the web and cite sources",
   "- I post a daily summary each evening and a morning deadline check — automatically",
   "Invite me to a channel and say hi!",
 ].join("\n");
