@@ -59,3 +59,54 @@ export async function recentMessages(
   );
   return result.rows.reverse();
 }
+
+/** Channels with at least `minHuman` human messages in the last `hours` hours. */
+export async function activeChannels(
+  workspaceId: string,
+  minHuman = 5,
+  hours = 24,
+): Promise<string[]> {
+  const since = new Date(Date.now() - hours * 3_600_000);
+  const result = await getPool().query<{ channel_id: string }>(
+    `SELECT channel_id
+       FROM messages
+      WHERE workspace_id = $1 AND is_bot = false AND created_at >= $2
+      GROUP BY channel_id
+     HAVING count(*) >= $3`,
+    [workspaceId, since, minHuman],
+  );
+  return result.rows.map((r) => r.channel_id);
+}
+
+/** Everything said in a channel in the last `hours` hours, oldest first. */
+export async function channelMessagesSince(
+  workspaceId: string,
+  channelId: string,
+  hours = 24,
+): Promise<MessageRow[]> {
+  const since = new Date(Date.now() - hours * 3_600_000);
+  const result = await getPool().query<MessageRow>(
+    `SELECT id, workspace_id, channel_id, slack_event_id, sender_id,
+            sender_name, text, is_bot, created_at
+       FROM messages
+      WHERE workspace_id = $1 AND channel_id = $2 AND created_at >= $3
+      ORDER BY created_at ASC`,
+    [workspaceId, channelId, since],
+  );
+  return result.rows;
+}
+
+/** Channel of the workspace's most recent message — the reminder fallback. */
+export async function mostRecentChannel(
+  workspaceId: string,
+): Promise<string | null> {
+  const result = await getPool().query<{ channel_id: string }>(
+    `SELECT channel_id
+       FROM messages
+      WHERE workspace_id = $1
+      ORDER BY created_at DESC
+      LIMIT 1`,
+    [workspaceId],
+  );
+  return result.rows[0]?.channel_id ?? null;
+}

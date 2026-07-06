@@ -7,6 +7,7 @@ export interface TodoRow {
   owner: string | null;
   deadline: Date | null;
   status: string;
+  channel_id: string | null;
   created_at: Date;
   done_at: Date | null;
 }
@@ -16,16 +17,18 @@ export interface NewTodo {
   task: string;
   owner: string | null;
   deadline: Date | null;
+  /** Where the todo was created — deadline reminders post back here. */
+  channelId: string | null;
 }
 
 const TODO_COLUMNS =
-  "id, workspace_id, task, owner, deadline, status, created_at, done_at";
+  "id, workspace_id, task, owner, deadline, status, channel_id, created_at, done_at";
 
 export async function insertTodo(todo: NewTodo): Promise<void> {
   await getPool().query(
-    `INSERT INTO todos (workspace_id, task, owner, deadline)
-     VALUES ($1, $2, $3, $4)`,
-    [todo.workspaceId, todo.task, todo.owner, todo.deadline],
+    `INSERT INTO todos (workspace_id, task, owner, deadline, channel_id)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [todo.workspaceId, todo.task, todo.owner, todo.deadline, todo.channelId],
   );
 }
 
@@ -37,6 +40,28 @@ export async function openTodos(workspaceId: string): Promise<TodoRow[]> {
       WHERE workspace_id = $1 AND status = 'open'
       ORDER BY deadline ASC NULLS LAST, created_at ASC`,
     [workspaceId],
+  );
+  return result.rows;
+}
+
+/**
+ * Open todos due on `dayStart`'s calendar day or earlier. `dayStart` is
+ * midnight of today in the team timezone; anything before the following
+ * midnight counts, so mid-day deadlines aren't missed.
+ */
+export async function dueOpenTodos(
+  workspaceId: string,
+  dayStart: Date,
+): Promise<TodoRow[]> {
+  const result = await getPool().query<TodoRow>(
+    `SELECT ${TODO_COLUMNS}
+       FROM todos
+      WHERE workspace_id = $1
+        AND status = 'open'
+        AND deadline IS NOT NULL
+        AND deadline < $2::TIMESTAMPTZ + INTERVAL '1 day'
+      ORDER BY deadline ASC`,
+    [workspaceId, dayStart],
   );
   return result.rows;
 }
