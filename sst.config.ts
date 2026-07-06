@@ -15,6 +15,7 @@ export default $config({
     const signingSecret = new sst.Secret("SlackSigningSecret");
     const botToken = new sst.Secret("SlackBotToken");
     const databaseUrl = new sst.Secret("DatabaseUrl");
+    const geminiApiKey = new sst.Secret("GeminiApiKey");
 
     const api = new sst.aws.ApiGatewayV2("Api");
 
@@ -26,6 +27,7 @@ export default $config({
         SLACK_SIGNING_SECRET: signingSecret.value,
         SLACK_BOT_TOKEN: botToken.value,
         DATABASE_URL: databaseUrl.value,
+        GEMINI_API_KEY: geminiApiKey.value,
       },
     });
 

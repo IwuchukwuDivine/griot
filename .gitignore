@@ -25,3 +25,6 @@ tasks/
 
 # Business docs — never public
 docs/
+
+# Project instructions for Claude Code — references private business context
+CLAUDE.md
