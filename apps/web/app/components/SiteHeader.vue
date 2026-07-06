@@ -1,7 +1,7 @@
 <template>
   <header class="site-header">
     <div class="container-site site-header__inner">
-      <a href="#top" class="site-header__brand">
+      <a href="/#top" class="site-header__brand">
         <img src="/favicon.svg" alt="" class="site-header__logo" />
         <span>Griot</span>
       </a>

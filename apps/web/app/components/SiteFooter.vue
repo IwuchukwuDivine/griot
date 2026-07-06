@@ -10,6 +10,7 @@
       </div>
 
       <div class="site-footer__links">
+        <NuxtLink to="/privacy">Privacy</NuxtLink>
         <a :href="GITHUB_URL" target="_blank" rel="noopener">GitHub</a>
         <a :href="LICENSE_URL" target="_blank" rel="noopener">MIT License</a>
         <a :href="README_SELF_HOST_URL" target="_blank" rel="noopener">

@@ -32,3 +32,9 @@ export type SelfHostStep = {
   title: string;
   detail: string;
 };
+
+export type PolicySection = {
+  title: string;
+  paragraphs: string[];
+  bullets?: string[];
+};

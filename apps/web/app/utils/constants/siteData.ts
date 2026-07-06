@@ -11,12 +11,12 @@ export const README_SELF_HOST_URL = `${GITHUB_URL}#self-hosting`;
 export const LICENSE_URL = `${GITHUB_URL}/blob/main/LICENSE`;
 
 export const NAV_LINKS = [
-  { label: "Memory", href: "#memory" },
-  { label: "Conflict Guard", href: "#conflict-guard" },
-  { label: "Usage", href: "#usage" },
-  { label: "Architecture", href: "#architecture" },
-  { label: "Self-host", href: "#self-host" },
-  { label: "FAQ", href: "#faq" },
+  { label: "Memory", href: "/#memory" },
+  { label: "Conflict Guard", href: "/#conflict-guard" },
+  { label: "Usage", href: "/#usage" },
+  { label: "Architecture", href: "/#architecture" },
+  { label: "Self-host", href: "/#self-host" },
+  { label: "FAQ", href: "/#faq" },
 ] as const;
 
 export const MEMORY_CARDS: MemoryCard[] = [
