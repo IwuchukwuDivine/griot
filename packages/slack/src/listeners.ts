@@ -14,15 +14,11 @@ import {
 } from "./handlers.js";
 import type { HandlerContext } from "./handlers.js";
 import { logger } from "./logger.js";
-import { resolveUserName } from "./users.js";
+import { resolveMentions, resolveUserName } from "./users.js";
 
 const NOT_SET_UP = "👋 I'm Griot, but this workspace isn't set up yet.";
 const SOMETHING_WRONG =
   "Something went wrong on my side — try again in a moment.";
-
-function stripMentions(text: string): string {
-  return text.replace(/<@[^>]+>/g, "").trim();
-}
 
 /** Shared by the Socket Mode (dev) and Lambda entrypoints so behavior is identical. */
 export function registerListeners(app: App): void {
@@ -47,7 +43,7 @@ export function registerListeners(app: App): void {
         slackEventId: body.event_id,
         senderId: event.user,
         senderName: await resolveUserName(client, event.user),
-        text: event.text ?? "",
+        text: await resolveMentions(client, event.text ?? "", context.botUserId),
       });
     } catch (err) {
       logger.error({ err, eventTs: event.ts }, "failed to log channel message");
@@ -107,7 +103,9 @@ export function registerListeners(app: App): void {
         : "teammate",
       reply,
     };
-    const text = stripMentions(event.text);
+    // Mentions become display names (the bot's own is dropped) so intent
+    // classification and todo-owner extraction see who was actually named.
+    const text = await resolveMentions(client, event.text, context.botUserId);
 
     try {
       await routeMention(ctx, text);
