@@ -38,12 +38,16 @@ export function buildAnswerPrompt(input: AnswerPromptInput): string {
       ? input.recent.map((line) => `${line.sender}: ${line.text}`).join("\n")
       : "(no recent messages)";
 
+  // No relevant knowledge → no section at all, so the model can't latch onto
+  // an "(empty)" placeholder or treat weak matches as grounding.
   const knowledge =
     input.matches.length > 0
-      ? input.matches.map((m) => `[${m.source}] ${m.content}`).join("\n---\n")
-      : "(empty)";
+      ? `\n\nKnowledge context:\n${input.matches
+          .map((m) => `[${m.source}] ${m.content}`)
+          .join("\n---\n")}`
+      : "";
 
-  return `Recent conversation (oldest first):\n${conversation}\n\nKnowledge context:\n${knowledge}\n\nQuestion from ${input.senderName}: ${input.question}`;
+  return `Recent conversation (oldest first):\n${conversation}${knowledge}\n\nQuestion from ${input.senderName}: ${input.question}`;
 }
 
 // ---------------------------------------------------------------------------

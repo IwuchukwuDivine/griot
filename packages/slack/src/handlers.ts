@@ -56,6 +56,16 @@ const REPHRASE_TASK =
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// Below this cosine similarity a knowledge chunk is noise, not grounding —
+// it is neither fed to the LLM nor cited as a source. Taught facts being
+// asked about typically match 0.8+, so real questions keep full recall.
+const DEFAULT_KNOWLEDGE_MIN_SIMILARITY = 0.65;
+
+function knowledgeMinSimilarity(): number {
+  const raw = Number(process.env.KNOWLEDGE_MIN_SIMILARITY);
+  return Number.isFinite(raw) ? raw : DEFAULT_KNOWLEDGE_MIN_SIMILARITY;
+}
+
 function toTodoEntry(todo: TodoRow, tz: string): OpenTodoEntry {
   return {
     id: todo.id,
@@ -104,10 +114,13 @@ export async function handleAnswer(
 ): Promise<void> {
   const llm = getLlm();
   const embedding = await llm.embed(question);
-  const [matches, recent] = await Promise.all([
+  const [rawMatches, recent] = await Promise.all([
     matchKnowledge(ctx.workspaceId, embedding, 5),
     recentMessages(ctx.workspaceId, ctx.channelId, 15),
   ]);
+  const matches = rawMatches.filter(
+    (m) => m.similarity >= knowledgeMinSimilarity(),
+  );
   const answer = await llm.complete({
     system: ANSWER_SYSTEM_PROMPT,
     prompt: buildAnswerPrompt({
@@ -145,7 +158,7 @@ export async function handleExplain(ctx: HandlerContext): Promise<void> {
   const sources = message?.sources;
   if (!sources || sources.knowledge.length === 0) {
     await ctx.reply(
-      "That one was just from the conversation — no stored knowledge involved.",
+      "That was my own reasoning based on the recent conversation — no stored knowledge was involved.",
     );
     return;
   }
@@ -155,10 +168,13 @@ export async function handleExplain(ctx: HandlerContext): Promise<void> {
     month: "short",
     day: "numeric",
   });
-  const lines = sources.knowledge.map(
-    (s) =>
-      `- [${s.source} ${dateFmt.format(new Date(s.created_at))}] "${s.snippet}" (${Math.round(s.similarity * 100)}% match)`,
-  );
+  const lines = [...sources.knowledge]
+    .sort((a, b) => b.similarity - a.similarity)
+    .slice(0, 3)
+    .map(
+      (s) =>
+        `- [${s.source} ${dateFmt.format(new Date(s.created_at))}] "${s.snippet}" (${Math.round(s.similarity * 100)}% match)`,
+    );
   const tail = sources.usedConversationWindow
     ? "\n...plus the recent conversation."
     : "";
