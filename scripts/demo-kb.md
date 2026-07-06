@@ -57,3 +57,27 @@ Griot is open source under the MIT license, at github.com/IwuchukwuDivine/griot.
 To install Griot, click "Add to Slack" on this site. The OAuth flow registers your workspace and Griot DMs the installer a quick-start note; re-installing simply refreshes tokens.
 
 Griot was built by Deevyn Ifunanya for the CockroachDB × AWS "Build with Agentic Memory" hackathon — an open-source rebuild of a WhatsApp assistant that runs in production for a small business. Teams forget what they decided; Griot doesn't.
+
+## Pricing
+
+Griot is completely free. It is an open-source project under the MIT license — there are no paid plans, no trials, and no billing. Install it in Slack at no cost, or self-host it on your own infrastructure for the cost of your own cloud accounts (CockroachDB has a free tier; Gemini and AWS usage at Griot's scale costs a few dollars a month at most).
+
+## Why not just search Slack?
+
+Slack search finds messages; it does not know which message was a decision, whether that decision was later overturned, or that "the rate" in a message from March means the consulting rate. Griot stores meaning, not just text: decisions are first-class records with an audit trail, facts are semantically searchable (ask in your own words, not the original phrasing), contradictions are actively flagged, and tasks have owners and deadlines that Griot follows up on itself. Search is passive; institutional memory is active.
+
+## Privacy and what Griot stores
+
+Griot stores, in CockroachDB and keyed to your workspace only: channel messages (for the rolling conversation window), facts your team teaches it, decisions it detects or you tag, and todos. Message text is sent to the LLM provider (Google Gemini) only to generate answers — it is not used to train models and is not shared with anyone else. Nothing is sold. To have a workspace's data deleted, email ekeneifunanya@gmail.com or uninstall and request deletion; because decisions are append-only with soft deletes, a full wipe is an explicit operation done on request.
+
+## Support and contact
+
+Questions, bugs, or feature requests: open an issue at github.com/IwuchukwuDivine/griot/issues or email ekeneifunanya@gmail.com. The landing page you are on now is griot-web-phi.vercel.app.
+
+## Limits of this demo chat
+
+This web demo answers up to 15 messages per visitor session and only answers questions — it cannot learn new facts, log decisions, or manage todos from here. Those live in Slack. If the demo says it has hit its daily limit, come back tomorrow or install Griot in Slack for the full experience.
+
+## What is coming next
+
+Planned next for Griot: document uploads straight into the knowledge base, a per-workspace usage dashboard, nightly memory consolidation (merging duplicate facts and flagging stale ones), Amazon Bedrock as a switch-on LLM provider, and more surfaces on the same memory — a customer-facing website widget and a WhatsApp variant, both answering from the same institutional memory the team maintains just by talking in Slack.
