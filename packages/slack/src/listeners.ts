@@ -111,7 +111,14 @@ export function registerListeners(app: App): void {
       await routeMention(ctx, text);
     } catch (err) {
       logger.error({ err, workspaceId, channelId }, "mention handling failed");
-      await reply(SOMETHING_WRONG);
+      try {
+        await reply(SOMETHING_WRONG);
+      } catch (replyErr) {
+        logger.error(
+          { err: replyErr, workspaceId, channelId },
+          "failed to deliver error reply",
+        );
+      }
     }
   });
 
