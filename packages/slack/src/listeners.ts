@@ -1,15 +1,19 @@
 import type { App } from "@slack/bolt";
-import { getLlm } from "@griot/agent";
+import { CLASSIFY_SYSTEM_PROMPT, getLlm, parseIntent } from "@griot/agent";
+import type { Intent } from "@griot/agent";
+import { getWorkspace, insertMessage } from "@griot/db";
 import {
-  getWorkspace,
-  insertKnowledge,
-  insertMessage,
-  matchKnowledge,
-  recentMessages,
-} from "@griot/db";
-import { chunkText } from "./chunk.js";
+  handleAnswer,
+  handleDecision,
+  handleForget,
+  handleLearn,
+  handleTodoAdd,
+  handleTodoDone,
+  handleTodoList,
+  handleTodoUpdate,
+} from "./handlers.js";
+import type { HandlerContext } from "./handlers.js";
 import { logger } from "./logger.js";
-import { ANSWER_SYSTEM_PROMPT, buildAnswerPrompt } from "./prompts.js";
 import { resolveUserName } from "./users.js";
 
 const NOT_SET_UP = "👋 I'm Griot, but this workspace isn't set up yet.";
@@ -19,8 +23,6 @@ const SOMETHING_WRONG =
 function stripMentions(text: string): string {
   return text.replace(/<@[^>]+>/g, "").trim();
 }
-
-type Reply = (text: string) => Promise<void>;
 
 /** Shared by the Socket Mode (dev) and Lambda entrypoints so behavior is identical. */
 export function registerListeners(app: App): void {
@@ -81,7 +83,7 @@ export function registerListeners(app: App): void {
 
     // Reply where the mention happened (thread if threaded) and log our own
     // words — conversation memory must include what the bot said.
-    const reply: Reply = async (text) => {
+    const reply = async (text: string): Promise<void> => {
       await say({ text, thread_ts: event.thread_ts });
       try {
         await insertMessage({
@@ -97,18 +99,18 @@ export function registerListeners(app: App): void {
       }
     };
 
+    const ctx: HandlerContext = {
+      workspaceId,
+      channelId,
+      senderName: event.user
+        ? await resolveUserName(client, event.user)
+        : "teammate",
+      reply,
+    };
     const text = stripMentions(event.text);
-    const learn = /^learn\s+/i.exec(text);
 
     try {
-      if (learn) {
-        await handleLearn(workspaceId, text.slice(learn[0].length), reply);
-      } else {
-        const senderName = event.user
-          ? await resolveUserName(client, event.user)
-          : "teammate";
-        await handleAnswer(workspaceId, channelId, text, senderName, reply);
-      }
+      await routeMention(ctx, text);
     } catch (err) {
       logger.error({ err, workspaceId, channelId }, "mention handling failed");
       await reply(SOMETHING_WRONG);
@@ -120,52 +122,64 @@ export function registerListeners(app: App): void {
   });
 }
 
-/** Semantic memory: chunk, embed, and store taught text. */
-async function handleLearn(
-  workspaceId: string,
-  content: string,
-  reply: Reply,
-): Promise<void> {
-  const trimmed = content.trim();
-  if (!trimmed) {
-    await reply(
-      "Tell me what to learn, e.g. `@Griot learn Standard rate is $50/hour.`",
-    );
+/**
+ * Prefix shortcuts (learn / #decision / forget) route directly — order
+ * matters; everything else goes through the fast-model classifier.
+ */
+async function routeMention(ctx: HandlerContext, text: string): Promise<void> {
+  const learn = /^learn\s+/i.exec(text);
+  if (learn) {
+    logRoute(ctx, "LEARN", "prefix");
+    await handleLearn(ctx, text.slice(learn[0].length));
     return;
   }
-  const llm = getLlm();
-  const chunks = chunkText(trimmed);
-  for (const chunk of chunks) {
-    const embedding = await llm.embed(chunk);
-    await insertKnowledge({
-      workspaceId,
-      content: chunk,
-      source: "taught",
-      embedding,
-    });
+
+  if (/#decision/i.test(text)) {
+    logRoute(ctx, "DECISION", "tag");
+    await handleDecision(ctx, text.replace(/^#decision:?\s*/i, "").trim());
+    return;
   }
-  logger.info({ workspaceId, chunks: chunks.length }, "learned knowledge");
-  await reply(`Learned ✅ (${chunks.length} chunk${chunks.length === 1 ? "" : "s"})`);
+
+  if (/^forget\b/i.test(text)) {
+    logRoute(ctx, "FORGET", "prefix");
+    await handleForget(ctx);
+    return;
+  }
+
+  const intent = parseIntent(
+    await getLlm().complete({
+      system: CLASSIFY_SYSTEM_PROMPT,
+      prompt: text,
+      model: "fast",
+    }),
+  );
+  logRoute(ctx, intent, "classifier");
+
+  switch (intent) {
+    case "DECISION":
+      await handleDecision(ctx, text);
+      break;
+    case "TODO_ADD":
+      await handleTodoAdd(ctx, text);
+      break;
+    case "TODO_UPDATE":
+      await handleTodoUpdate(ctx, text);
+      break;
+    case "TODO_DONE":
+      await handleTodoDone(ctx, text);
+      break;
+    case "TODO_LIST":
+      await handleTodoList(ctx);
+      break;
+    default:
+      await handleAnswer(ctx, text);
+  }
 }
 
-/** RAG: embed the question, retrieve knowledge + recent conversation, answer grounded. */
-async function handleAnswer(
-  workspaceId: string,
-  channelId: string,
-  question: string,
-  senderName: string,
-  reply: Reply,
-): Promise<void> {
-  const llm = getLlm();
-  const embedding = await llm.embed(question);
-  const [matches, recent] = await Promise.all([
-    matchKnowledge(workspaceId, embedding, 5),
-    recentMessages(workspaceId, channelId, 15),
-  ]);
-  const answer = await llm.complete({
-    system: ANSWER_SYSTEM_PROMPT,
-    prompt: buildAnswerPrompt({ recent, matches, senderName, question }),
-    model: "smart",
-  });
-  await reply(answer);
+function logRoute(
+  ctx: HandlerContext,
+  intent: Intent | "LEARN" | "FORGET",
+  route: string,
+): void {
+  logger.info({ workspaceId: ctx.workspaceId, intent, route }, "routing mention");
 }
