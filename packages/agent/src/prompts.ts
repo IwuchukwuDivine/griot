@@ -47,6 +47,12 @@ export function buildAnswerPrompt(input: AnswerPromptInput): string {
 }
 
 // ---------------------------------------------------------------------------
+// DAILY SUMMARY — user content is "<sender>: <text>" lines, oldest first
+
+export const DAILY_SUMMARY_SYSTEM_PROMPT =
+  "You are the team's assistant. Summarize today's channel activity for the team. Structure: 1) Key discussions (1-2 lines each), 2) Decisions made (look for agreements and commitments), 3) Action items with owner names if identifiable. Be brief and skip greetings/small talk entirely. Use Slack formatting sparingly — simple dashes for lists, no markdown headers. Start with: 📋 Daily Summary";
+
+// ---------------------------------------------------------------------------
 // CLASSIFY — user content is the stripped mention text
 
 export const CLASSIFY_SYSTEM_PROMPT =

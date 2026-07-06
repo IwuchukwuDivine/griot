@@ -220,7 +220,13 @@ export async function handleTodoAdd(
     deadlineStr = parsed.deadline;
   }
 
-  await insertTodo({ workspaceId: ctx.workspaceId, task, owner, deadline });
+  await insertTodo({
+    workspaceId: ctx.workspaceId,
+    task,
+    owner,
+    deadline,
+    channelId: ctx.channelId,
+  });
   await ctx.reply(
     `Noted 📝 ${task} — ${owner}${deadlineStr ? `, due ${deadlineStr}` : ""}`,
   );

@@ -1,5 +1,6 @@
 export { EMBEDDING_DIM } from "@griot/db";
 export { getLlm } from "./llm/index.js";
+export { runDailySummary, runDeadlineCheck } from "./jobs.js";
 export { GeminiProvider } from "./llm/gemini.js";
 export { BedrockProvider } from "./llm/bedrock.js";
 export type { CompleteOptions, LlmProvider, ModelTier } from "./llm/provider.js";
