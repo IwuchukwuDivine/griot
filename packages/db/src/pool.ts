@@ -1,4 +1,5 @@
 import pg from "pg";
+import { logger } from "./logger.js";
 
 let pool: pg.Pool | undefined;
 
@@ -21,7 +22,15 @@ export function getPool(): pg.Pool {
     pool = new pg.Pool({
       connectionString: databaseUrl,
       ssl: sslConfig(databaseUrl),
-      max: 5,
+      // Lambda handles one event per instance — 2 covers a query racing a
+      // Promise.all pair without hoarding CRDB connections across instances.
+      max: 2,
+    });
+    // Idle connections get dropped (Lambda freeze, server-side timeout).
+    // Without a listener the pool's 'error' event would crash the process;
+    // pg discards the broken client and the next query gets a fresh one.
+    pool.on("error", (err) => {
+      logger.warn({ err }, "idle db connection dropped");
     });
   }
   return pool;
