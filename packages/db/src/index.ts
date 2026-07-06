@@ -35,4 +35,5 @@ export {
   updateTodo,
 } from "./todos.js";
 export type { NewTodo, TodoPatch, TodoRow } from "./todos.js";
+export { claimEvent, pruneProcessedEvents } from "./events.js";
 export { runMigrations, getLatestAppliedMigration } from "./migrate.js";
