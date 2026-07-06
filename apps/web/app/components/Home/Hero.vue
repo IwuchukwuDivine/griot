@@ -50,7 +50,13 @@ const slackInstallUrl = useRuntimeConfig().public.slackInstallUrl;
 
 <style scoped>
 .hero {
-  padding-block: 5rem 4.5rem;
+  padding-block: 2.5rem 3rem;
+}
+
+@media (min-width: 768px) {
+  .hero {
+    padding-block: 5rem 4.5rem;
+  }
 }
 
 .hero__inner {
