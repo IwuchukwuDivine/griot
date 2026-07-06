@@ -25,7 +25,7 @@ export default $config({
     // handler routes the two GET paths itself before Bolt sees anything.
     const slackFn = new sst.aws.Function("SlackHandler", {
       handler: "packages/slack/src/lambda.handler",
-      runtime: "nodejs20.x",
+      runtime: "nodejs22.x",
       architecture: "arm64",
       environment: {
         SLACK_SIGNING_SECRET: signingSecret.value,
@@ -43,7 +43,7 @@ export default $config({
 
     api.route("GET /health", {
       handler: "packages/slack/src/health.handler",
-      runtime: "nodejs20.x",
+      runtime: "nodejs22.x",
       architecture: "arm64",
       environment: {
         DATABASE_URL: databaseUrl.value,
@@ -54,7 +54,7 @@ export default $config({
     // Africa/Lagos is UTC+1 year-round (no DST).
     const cronFunction = {
       handler: "packages/slack/src/cron.handler",
-      runtime: "nodejs20.x" as const,
+      runtime: "nodejs22.x" as const,
       architecture: "arm64" as const,
       timeout: "120 seconds" as const,
       environment: {
