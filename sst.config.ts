@@ -27,6 +27,9 @@ export default $config({
       handler: "packages/slack/src/lambda.handler",
       runtime: "nodejs22.x",
       architecture: "arm64",
+      // More memory = proportionally more CPU on Lambda → faster cold-start
+      // inits, which is what pushed acks past Slack's 3s window.
+      memory: "512 MB",
       environment: {
         SLACK_SIGNING_SECRET: signingSecret.value,
         SLACK_BOT_TOKEN: botToken.value,
