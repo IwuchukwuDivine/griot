@@ -5,6 +5,8 @@ export interface CompleteOptions {
   system: string;
   prompt: string;
   model?: ModelTier;
+  /** Ground the completion in live web search (provider-specific mechanism). */
+  research?: boolean;
 }
 
 export interface LlmProvider {

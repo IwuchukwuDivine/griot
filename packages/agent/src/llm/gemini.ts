@@ -15,6 +15,9 @@ interface GenerateContentResponse {
   candidates?: Array<{
     content?: { parts?: Array<{ text?: string }> };
     finishReason?: string;
+    groundingMetadata?: {
+      groundingChunks?: Array<{ web?: { title?: string; uri?: string } }>;
+    };
   }>;
 }
 
@@ -48,10 +51,15 @@ export class GeminiProvider implements LlmProvider {
 
   async complete(opts: CompleteOptions): Promise<string> {
     const model = this.models[opts.model ?? "smart"];
-    const body = {
+    const body: Record<string, unknown> = {
       systemInstruction: { parts: [{ text: opts.system }] },
       contents: [{ role: "user", parts: [{ text: opts.prompt }] }],
     };
+    if (opts.research) {
+      // Google Search grounding — the model searches the live web and the
+      // response carries groundingMetadata with the sources it used.
+      body.tools = [{ google_search: {} }];
+    }
 
     // Gemini occasionally answers finishReason STOP with an empty candidate;
     // that slips past the HTTP retry loop, so retry the call once here.
@@ -68,6 +76,9 @@ export class GeminiProvider implements LlmProvider {
         .trim();
       if (text) {
         logger.debug({ model, chars: text.length }, "gemini completion");
+        if (opts.research) {
+          return appendSources(text, candidate?.groundingMetadata);
+        }
         return text;
       }
       const finishReason = candidate?.finishReason ?? "unknown";
@@ -96,6 +107,33 @@ export class GeminiProvider implements LlmProvider {
     // normalize so stored and query vectors are always comparable.
     return normalize(values);
   }
+}
+
+type GroundingMetadata = NonNullable<
+  NonNullable<GenerateContentResponse["candidates"]>[number]["groundingMetadata"]
+>;
+
+/**
+ * The prompt asks the model to name its sources, but grounded replies often
+ * omit them from the text — groundingMetadata is authoritative, so append a
+ * Sources line from it unless the model already wrote one.
+ */
+function appendSources(
+  text: string,
+  metadata: GroundingMetadata | undefined,
+): string {
+  if (/sources:/i.test(text)) {
+    return text;
+  }
+  const titles =
+    metadata?.groundingChunks
+      ?.map((chunk) => chunk.web?.title)
+      .filter((title): title is string => Boolean(title)) ?? [];
+  const unique = [...new Set(titles)];
+  if (unique.length === 0) {
+    return text;
+  }
+  return `${text}\n\nSources: ${unique.join(", ")}`;
 }
 
 function normalize(values: number[]): number[] {
