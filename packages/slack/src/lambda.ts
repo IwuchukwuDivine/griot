@@ -64,6 +64,19 @@ export const handler = async (
     }
   }
 
+  // AwsLambdaReceiver never populates context.retryNum, so the in-listener
+  // retry guard can't see HTTP redeliveries — guard on the headers here.
+  // Slack redelivers when our ack is slow (cold start + LLM latency); the
+  // first delivery is still processing, so just ack the retry and stop.
+  const retryNum = event.headers?.["x-slack-retry-num"];
+  if (retryNum !== undefined) {
+    logger.info(
+      { retryNum, retryReason: event.headers?.["x-slack-retry-reason"] },
+      "slack retry received — acking without reprocessing",
+    );
+    return { statusCode: 200, body: "" };
+  }
+
   const boltHandler = await receiver.start();
   return boltHandler(
     event as unknown as Parameters<BoltHandler>[0],

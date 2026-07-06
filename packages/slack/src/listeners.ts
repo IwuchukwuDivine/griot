@@ -1,7 +1,7 @@
 import type { App } from "@slack/bolt";
 import { CLASSIFY_SYSTEM_PROMPT, getLlm, parseIntent } from "@griot/agent";
 import type { Intent } from "@griot/agent";
-import { getWorkspace, insertMessage } from "@griot/db";
+import { claimEvent, getWorkspace, insertMessage } from "@griot/db";
 import {
   handleAnswer,
   handleDecision,
@@ -50,9 +50,10 @@ export function registerListeners(app: App): void {
     }
   });
 
-  app.event("app_mention", async ({ event, context, say, client }) => {
+  app.event("app_mention", async ({ event, body, context, say, client }) => {
     // Slack retries delivery if we were slow to ack; don't reprocess.
-    // First deliveries carry retryNum 0 (Socket Mode) or undefined (HTTP) — only skip real retries.
+    // Socket Mode surfaces retryNum here; the Lambda path guards on the
+    // x-slack-retry-num header before Bolt ever runs.
     if (typeof context.retryNum === "number" && context.retryNum >= 1) {
       logger.info(
         {
@@ -66,6 +67,21 @@ export function registerListeners(app: App): void {
     }
 
     const teamId = context.teamId ?? event.team;
+
+    // Belt-and-braces: claim the event id before doing anything visible, so
+    // a redelivery that slips past the retry guards can't reply twice.
+    const eventId = body.event_id;
+    if (teamId && eventId) {
+      const claimed = await claimEvent(teamId, eventId);
+      if (!claimed) {
+        logger.info(
+          { teamId, eventId },
+          "event already claimed by an earlier delivery — skipping",
+        );
+        return;
+      }
+    }
+
     const workspace = teamId ? await getWorkspace(teamId) : null;
 
     if (!workspace || workspace.status !== "active") {
