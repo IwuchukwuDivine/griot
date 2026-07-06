@@ -10,8 +10,9 @@
         <p class="section-lead hero__lead">
           Griot lives in your Slack workspace. It answers from what your team
           has taught it, remembers every decision — and pushes back when a new
-          one contradicts an old one — tracks tasks in plain language, and
-          keeps the rhythm with daily summaries and morning deadline checks.
+          one contradicts an old one — tracks tasks in plain language,
+          researches the web when you ask, and keeps the rhythm with daily
+          summaries and morning deadline checks.
         </p>
         <div class="hero__ctas">
           <a

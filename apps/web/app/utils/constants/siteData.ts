@@ -118,6 +118,12 @@ export const USAGE_EXAMPLES: UsageExample[] = [
     griot: "Creates a todo with the owner and deadline parsed from plain language.",
   },
   {
+    label: "Update a task",
+    you: "@Griot move the flyer deadline to Monday",
+    griot:
+      "Finds the existing todo and updates it — deadlines and owners change in plain language too.",
+  },
+  {
     label: "Complete a task",
     you: "@Griot the flyer is ready",
     griot: "Matches the message against open todos and closes the right one.",
@@ -126,6 +132,12 @@ export const USAGE_EXAMPLES: UsageExample[] = [
     label: "List tasks",
     you: "@Griot what's pending?",
     griot: "Lists open tasks, soonest deadline first.",
+  },
+  {
+    label: "Research the web",
+    you: "@Griot find out what competitors charge for logo design",
+    griot:
+      "Searches the live web and replies with concise findings plus the sources it used — for anything beyond the team's own knowledge.",
   },
   {
     label: "Ask for provenance",
@@ -210,6 +222,11 @@ export const FAQ_ENTRIES: FaqEntry[] = [
     question: "What does it store?",
     answer:
       "Recent channel messages (a rolling window), the facts you teach it, decisions, and todos — all in CockroachDB, all keyed by your workspace. Decisions are append-only, so the history stays inspectable.",
+  },
+  {
+    question: "What if the answer isn't in the knowledge base?",
+    answer:
+      "For business facts, Griot says \"Not sure\" instead of guessing. But ask it to research something — \"find out what competitors charge\" — and it searches the live web and comes back with findings and the sources it used.",
   },
   {
     question: "How do I undo something?",
