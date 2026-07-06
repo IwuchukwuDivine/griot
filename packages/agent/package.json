@@ -2,7 +2,7 @@
   "name": "@griot/agent",
   "version": "0.0.0",
   "private": true,
-  "description": "Griot's reasoning core — Bedrock-backed chat and retrieval",
+  "description": "Griot's reasoning core — provider-agnostic LLM access (Gemini primary, Bedrock behind a flag)",
   "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
@@ -10,5 +10,8 @@
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "pino": "^9.7.0"
   }
 }
