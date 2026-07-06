@@ -24,6 +24,8 @@ const app = new App({
   // Slack's 3s ack window will lapse on slow LLM calls; the retry guard and
   // idempotent writes absorb the redeliveries.
   processBeforeResponse: true,
+  // Wait out Slack 429s (retry-after) instead of surfacing them as errors.
+  clientOptions: { rejectRateLimitedCalls: false },
   logger: createBoltLogger(),
 });
 

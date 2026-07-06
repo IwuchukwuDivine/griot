@@ -20,7 +20,9 @@ function clientFor(workspace: WorkspaceRow): WebClient {
       `No bot token for workspace ${workspace.workspace_id} and SLACK_BOT_TOKEN is unset`,
     );
   }
-  return new WebClient(token);
+  // Crons post channel-by-channel sequentially; on a 429 the client honors
+  // retry-after instead of erroring, so bursts degrade to waiting.
+  return new WebClient(token, { rejectRateLimitedCalls: false });
 }
 
 /** Posts to Slack and logs the post to working memory, like every Griot reply. */

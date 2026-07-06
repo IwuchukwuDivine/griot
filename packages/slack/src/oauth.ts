@@ -126,7 +126,9 @@ export async function handleOauthCallback(
   const installerId = access.authed_user?.id;
   if (installerId) {
     try {
-      const botClient = new WebClient(botToken);
+      const botClient = new WebClient(botToken, {
+        rejectRateLimitedCalls: false,
+      });
       const dm = await botClient.conversations.open({ users: installerId });
       if (dm.channel?.id) {
         await botClient.chat.postMessage({

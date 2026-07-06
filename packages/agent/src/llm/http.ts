@@ -45,7 +45,9 @@ export async function postJsonWithRetry(
       if (attempt >= MAX_ATTEMPTS || !isRetryable(err)) {
         throw err;
       }
-      const delayMs = BASE_DELAY_MS * 2 ** (attempt - 1);
+      // Equal jitter so concurrent Lambdas don't retry in lockstep.
+      const backoff = BASE_DELAY_MS * 2 ** (attempt - 1);
+      const delayMs = Math.round(backoff / 2 + Math.random() * (backoff / 2));
       logger.warn({ err, attempt, delayMs }, "llm request failed — retrying");
       await sleep(delayMs);
     }

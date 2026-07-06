@@ -11,6 +11,8 @@ const app = new App({
   // app is installed in, not just the dev one. Tokens must be resolved
   // per workspace here too (SLACK_BOT_TOKEN stays the dev fallback).
   authorize,
+  // Wait out Slack 429s (retry-after) instead of surfacing them as errors.
+  clientOptions: { rejectRateLimitedCalls: false },
   logger: createBoltLogger(),
 });
 

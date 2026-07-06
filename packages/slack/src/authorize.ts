@@ -28,7 +28,9 @@ export async function authorize({
     return cached;
   }
   // Bolt needs botUserId so listeners can tell Griot's own mention apart.
-  const auth = await new WebClient(botToken).auth.test();
+  const auth = await new WebClient(botToken, {
+    rejectRateLimitedCalls: false,
+  }).auth.test();
   const result: AuthorizeResult = {
     botToken,
     botId: auth.bot_id,
