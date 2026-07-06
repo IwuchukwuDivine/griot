@@ -38,12 +38,16 @@ export function buildAnswerPrompt(input: AnswerPromptInput): string {
       ? input.recent.map((line) => `${line.sender}: ${line.text}`).join("\n")
       : "(no recent messages)";
 
+  // No relevant knowledge → no section at all, so the model can't latch onto
+  // an "(empty)" placeholder or treat weak matches as grounding.
   const knowledge =
     input.matches.length > 0
-      ? input.matches.map((m) => `[${m.source}] ${m.content}`).join("\n---\n")
-      : "(empty)";
+      ? `\n\nKnowledge context:\n${input.matches
+          .map((m) => `[${m.source}] ${m.content}`)
+          .join("\n---\n")}`
+      : "";
 
-  return `Recent conversation (oldest first):\n${conversation}\n\nKnowledge context:\n${knowledge}\n\nQuestion from ${input.senderName}: ${input.question}`;
+  return `Recent conversation (oldest first):\n${conversation}${knowledge}\n\nQuestion from ${input.senderName}: ${input.question}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -56,7 +60,7 @@ export const DAILY_SUMMARY_SYSTEM_PROMPT =
 // CLASSIFY — user content is the stripped mention text
 
 export const CLASSIFY_SYSTEM_PROMPT =
-  "Classify the team member's message. Reply with exactly one word. DECISION — the message states a choice, agreement, commitment or policy the team has made or is announcing (e.g. 'we will...', 'we decided...', 'let's go with...', 'from now on...'). TODO_ADD — the message assigns or creates a task or action item for someone, possibly with a deadline (e.g. 'Ada is to design the flyer before Monday', 'todo: call the vendors tomorrow', 'remind Sam to schedule the reviews'). TODO_UPDATE — the message changes an EXISTING task: extending, moving or postponing its deadline, or reassigning its owner (e.g. 'extend the branding to July 8', 'move the flyer deadline to Friday', 'give that task to Sam instead'). TODO_DONE — the message reports a task is finished (e.g. 'done with the logo concepts', 'the flyer is ready'). TODO_LIST — the message asks which tasks are open, pending, due, or assigned to someone. RESEARCH — the message asks to research, look up, find out, or gather external/web/market information (e.g. 'research X', 'find out what competitors charge'). QUESTION — anything else: questions about the business, requests, discussion, chat. When unsure, reply QUESTION.";
+  "Classify the team member's message. Reply with exactly one word. DECISION — the message states a choice, agreement, commitment or policy the team has made or is announcing (e.g. 'we will...', 'we decided...', 'let's go with...', 'from now on...'). TODO_ADD — the message assigns or creates a task or action item for someone, possibly with a deadline (e.g. 'Ada is to design the flyer before Monday', 'todo: call the vendors tomorrow', 'remind Sam to schedule the reviews'). TODO_UPDATE — the message changes an EXISTING task: extending, moving or postponing its deadline, or reassigning its owner (e.g. 'extend the branding to July 8', 'move the flyer deadline to Friday', 'give that task to Sam instead'). TODO_DONE — the message reports a task is finished (e.g. 'done with the logo concepts', 'the flyer is ready'). TODO_LIST — the message asks which tasks are open, pending, due, or assigned to someone. RESEARCH — the message asks to research, look up, find out, or gather external/web/market information (e.g. 'research X', 'find out what competitors charge'). EXPLAIN — the message asks why Griot said something, where its answer came from, or what it based a reply on (e.g. 'why did you say that?', 'where did that come from?', 'what's that based on?'). SUPERSEDE — the message confirms a new rule should replace/supersede an older conflicting one (e.g. 'replace the old rule', 'yes, the new one stands', 'supersede it'). QUESTION — anything else: questions about the business, requests, discussion, chat. When unsure, reply QUESTION.";
 
 // ---------------------------------------------------------------------------
 // RESEARCH — user content is the question; needs the provider's research

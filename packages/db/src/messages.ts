@@ -1,5 +1,22 @@
 import { getPool } from "./pool.js";
 
+/** One knowledge chunk that was actually fed into an answer's prompt. */
+export interface KnowledgeSource {
+  id: string;
+  source: string;
+  /** First 120 chars of the chunk. */
+  snippet: string;
+  similarity: number;
+  /** ISO timestamp of when the chunk was learned. */
+  created_at: string;
+}
+
+/** Provenance of a bot answer — stored as JSONB on the reply's messages row. */
+export interface MessageSources {
+  knowledge: KnowledgeSource[];
+  usedConversationWindow: boolean;
+}
+
 export interface MessageRow {
   id: string;
   workspace_id: string;
@@ -9,6 +26,7 @@ export interface MessageRow {
   sender_name: string | null;
   text: string | null;
   is_bot: boolean;
+  sources: MessageSources | null;
   created_at: Date;
 }
 
@@ -21,14 +39,15 @@ export interface NewMessage {
   senderName?: string | null;
   text: string;
   isBot?: boolean;
+  sources?: MessageSources | null;
 }
 
 /** Idempotent: a retried Slack delivery hits the unique event-id index and is dropped. */
 export async function insertMessage(message: NewMessage): Promise<void> {
   await getPool().query(
     `INSERT INTO messages
-       (workspace_id, channel_id, slack_event_id, sender_id, sender_name, text, is_bot)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+       (workspace_id, channel_id, slack_event_id, sender_id, sender_name, text, is_bot, sources)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      ON CONFLICT DO NOTHING`,
     [
       message.workspaceId,
@@ -38,8 +57,27 @@ export async function insertMessage(message: NewMessage): Promise<void> {
       message.senderName ?? null,
       message.text,
       message.isBot ?? false,
+      message.sources ? JSON.stringify(message.sources) : null,
     ],
   );
+}
+
+/** Most recent bot reply in a channel that recorded its provenance. */
+export async function latestSourcedBotMessage(
+  workspaceId: string,
+  channelId: string,
+): Promise<MessageRow | null> {
+  const result = await getPool().query<MessageRow>(
+    `SELECT id, workspace_id, channel_id, slack_event_id, sender_id,
+            sender_name, text, is_bot, sources, created_at
+       FROM messages
+      WHERE workspace_id = $1 AND channel_id = $2
+        AND is_bot = true AND sources IS NOT NULL
+      ORDER BY created_at DESC
+      LIMIT 1`,
+    [workspaceId, channelId],
+  );
+  return result.rows[0] ?? null;
 }
 
 /** Last n messages in a channel, oldest first — ready to feed into a prompt. */
@@ -50,7 +88,7 @@ export async function recentMessages(
 ): Promise<MessageRow[]> {
   const result = await getPool().query<MessageRow>(
     `SELECT id, workspace_id, channel_id, slack_event_id, sender_id,
-            sender_name, text, is_bot, created_at
+            sender_name, text, is_bot, sources, created_at
        FROM messages
       WHERE workspace_id = $1 AND channel_id = $2
       ORDER BY created_at DESC
@@ -87,7 +125,7 @@ export async function channelMessagesSince(
   const since = new Date(Date.now() - hours * 3_600_000);
   const result = await getPool().query<MessageRow>(
     `SELECT id, workspace_id, channel_id, slack_event_id, sender_id,
-            sender_name, text, is_bot, created_at
+            sender_name, text, is_bot, sources, created_at
        FROM messages
       WHERE workspace_id = $1 AND channel_id = $2 AND created_at >= $3
       ORDER BY created_at ASC`,

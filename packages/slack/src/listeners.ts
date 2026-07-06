@@ -2,12 +2,15 @@ import type { App } from "@slack/bolt";
 import { CLASSIFY_SYSTEM_PROMPT, getLlm, parseIntent } from "@griot/agent";
 import type { Intent } from "@griot/agent";
 import { claimEvent, getWorkspace, insertMessage } from "@griot/db";
+import type { MessageSources } from "@griot/db";
 import {
   handleAnswer,
   handleDecision,
+  handleExplain,
   handleForget,
   handleLearn,
   handleResearch,
+  handleSupersede,
   handleTodoAdd,
   handleTodoDone,
   handleTodoList,
@@ -96,7 +99,10 @@ export function registerListeners(app: App): void {
 
     // Reply where the mention happened (thread if threaded) and log our own
     // words — conversation memory must include what the bot said.
-    const reply = async (text: string): Promise<void> => {
+    const reply = async (
+      text: string,
+      sources?: MessageSources,
+    ): Promise<void> => {
       await say({ text, thread_ts: event.thread_ts });
       try {
         await insertMessage({
@@ -106,6 +112,7 @@ export function registerListeners(app: App): void {
           senderName: "Griot",
           text,
           isBot: true,
+          sources: sources ?? null,
         });
       } catch (err) {
         logger.error({ err, channelId }, "failed to log bot reply");
@@ -195,6 +202,12 @@ async function routeMention(ctx: HandlerContext, text: string): Promise<void> {
       break;
     case "RESEARCH":
       await handleResearch(ctx, text);
+      break;
+    case "EXPLAIN":
+      await handleExplain(ctx);
+      break;
+    case "SUPERSEDE":
+      await handleSupersede(ctx);
       break;
     default:
       await handleAnswer(ctx, text);
