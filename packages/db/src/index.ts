@@ -14,19 +14,37 @@ export {
   activeChannels,
   channelMessagesSince,
   insertMessage,
+  latestSourcedBotMessage,
   mostRecentChannel,
   recentMessages,
 } from "./messages.js";
-export type { MessageRow, NewMessage } from "./messages.js";
-export { insertKnowledge, matchKnowledge } from "./knowledge.js";
+export type {
+  KnowledgeSource,
+  MessageRow,
+  MessageSources,
+  NewMessage,
+} from "./messages.js";
+export {
+  insertKnowledge,
+  matchKnowledge,
+  supersedeKnowledge,
+} from "./knowledge.js";
 export type { KnowledgeMatch, NewKnowledge } from "./knowledge.js";
 export {
   insertDecision,
-  matchDecisions,
   latestDecision,
+  latestPendingConflict,
+  matchDecisions,
+  setDecisionConflict,
   softDeleteDecision,
+  supersedeDecision,
 } from "./decisions.js";
-export type { DecisionMatch, DecisionRow, NewDecision } from "./decisions.js";
+export type {
+  DecisionMatch,
+  DecisionRow,
+  NewDecision,
+  PendingConflict,
+} from "./decisions.js";
 export {
   completeTodo,
   dueOpenTodos,
