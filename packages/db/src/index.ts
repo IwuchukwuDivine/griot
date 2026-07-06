@@ -1,7 +1,15 @@
 export { EMBEDDING_DIM } from "./constants.js";
 export { getPool, closePool } from "./pool.js";
-export { getWorkspace, listActiveWorkspaces } from "./workspaces.js";
-export type { WorkspaceRow, WorkspaceStatus } from "./workspaces.js";
+export {
+  getWorkspace,
+  listActiveWorkspaces,
+  upsertWorkspace,
+} from "./workspaces.js";
+export type {
+  UpsertWorkspace,
+  WorkspaceRow,
+  WorkspaceStatus,
+} from "./workspaces.js";
 export {
   activeChannels,
   channelMessagesSince,
