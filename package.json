@@ -18,6 +18,7 @@
     "typecheck": "npm run typecheck --workspaces",
     "dev": "npm run build && node --env-file=.env packages/slack/dist/dev.js",
     "db:migrate": "npm run build -w @griot/db && node --env-file=.env packages/db/dist/migrate-cli.js",
+    "seed:demo": "npm run build -w @griot/agent && node --env-file=.env --experimental-strip-types scripts/seed-demo.ts",
     "job:summary": "npm run build -w @griot/agent && node --env-file=.env packages/agent/dist/run-job.js daily_summary",
     "job:deadline": "npm run build -w @griot/agent && node --env-file=.env packages/agent/dist/run-job.js deadline_check"
   },

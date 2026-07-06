@@ -13,11 +13,13 @@ export type {
 export {
   activeChannels,
   channelMessagesSince,
+  countHumanMessages,
   insertMessage,
   latestSourcedBotMessage,
   mostRecentChannel,
   recentMessages,
 } from "./messages.js";
+export { incrementDailyChatCount } from "./chat-usage.js";
 export type {
   KnowledgeSource,
   MessageRow,

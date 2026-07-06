@@ -61,7 +61,7 @@ const UUID_RE =
 // asked about typically match 0.8+, so real questions keep full recall.
 const DEFAULT_KNOWLEDGE_MIN_SIMILARITY = 0.65;
 
-function knowledgeMinSimilarity(): number {
+export function knowledgeMinSimilarity(): number {
   const raw = Number(process.env.KNOWLEDGE_MIN_SIMILARITY);
   return Number.isFinite(raw) ? raw : DEFAULT_KNOWLEDGE_MIN_SIMILARITY;
 }
@@ -149,18 +149,13 @@ export async function handleAnswer(
 }
 
 /**
- * Provenance: explains the most recent answer that recorded its sources —
- * which memories were quoted, how closely they matched, and when they were
- * learned.
+ * Renders a reply's stored provenance as prose — which memories were quoted,
+ * how closely they matched, and when they were learned. Shared by the Slack
+ * EXPLAIN intent and the web demo's chat route.
  */
-export async function handleExplain(ctx: HandlerContext): Promise<void> {
-  const message = await latestSourcedBotMessage(ctx.workspaceId, ctx.channelId);
-  const sources = message?.sources;
+export function explainReply(sources: MessageSources | null | undefined): string {
   if (!sources || sources.knowledge.length === 0) {
-    await ctx.reply(
-      "That was my own reasoning based on the recent conversation — no stored knowledge was involved.",
-    );
-    return;
+    return "That was my own reasoning based on the recent conversation — no stored knowledge was involved.";
   }
   const tz = resolveTz();
   const dateFmt = new Intl.DateTimeFormat("en-US", {
@@ -178,7 +173,13 @@ export async function handleExplain(ctx: HandlerContext): Promise<void> {
   const tail = sources.usedConversationWindow
     ? "\n...plus the recent conversation."
     : "";
-  await ctx.reply(`That came from my memory:\n${lines.join("\n")}${tail}`);
+  return `That came from my memory:\n${lines.join("\n")}${tail}`;
+}
+
+/** Provenance: explains the most recent answer that recorded its sources. */
+export async function handleExplain(ctx: HandlerContext): Promise<void> {
+  const message = await latestSourcedBotMessage(ctx.workspaceId, ctx.channelId);
+  await ctx.reply(explainReply(message?.sources));
 }
 
 /** RESEARCH: web-grounded findings via the provider's research capability. */

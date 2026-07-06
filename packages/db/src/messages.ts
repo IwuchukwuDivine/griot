@@ -98,6 +98,20 @@ export async function recentMessages(
   return result.rows.reverse();
 }
 
+/** Human (non-bot) messages ever sent in a channel — the web demo's per-session cap. */
+export async function countHumanMessages(
+  workspaceId: string,
+  channelId: string,
+): Promise<number> {
+  const result = await getPool().query<{ count: string }>(
+    `SELECT count(*) AS count
+       FROM messages
+      WHERE workspace_id = $1 AND channel_id = $2 AND is_bot = false`,
+    [workspaceId, channelId],
+  );
+  return Number(result.rows[0]?.count ?? 0);
+}
+
 /** Channels with at least `minHuman` human messages in the last `hours` hours. */
 export async function activeChannels(
   workspaceId: string,

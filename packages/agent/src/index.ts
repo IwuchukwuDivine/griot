@@ -15,6 +15,7 @@ export {
   DAILY_SUMMARY_SYSTEM_PROMPT,
   RESEARCH_SYSTEM_PROMPT,
   TODO_DONE_SYSTEM_PROMPT,
+  WEB_DEMO_ANSWER_SYSTEM_PROMPT,
   buildAnswerPrompt,
   buildConflictPrompt,
   buildTodoAddSystemPrompt,

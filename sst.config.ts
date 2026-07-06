@@ -7,7 +7,7 @@ export default $config({
       removal: input?.stage === "production" ? "retain" : "remove",
       home: "aws",
       providers: {
-        aws: { region: "eu-west-2" },
+        aws: { region: "eu-west-2", profile: "griot-deploy" },
       },
     };
   },
@@ -43,6 +43,23 @@ export default $config({
     api.route("POST /slack/events", slackFn.arn);
     api.route("GET /slack/install", slackFn.arn);
     api.route("GET /slack/oauth_redirect", slackFn.arn);
+
+    // Public web-chat demo — the landing-page widget. Read-only RAG against
+    // the demo workspace; the tenant is pinned here, never sent by the client.
+    api.route("POST /chat", {
+      handler: "packages/slack/src/chat.handler",
+      runtime: "nodejs22.x",
+      architecture: "arm64",
+      memory: "512 MB",
+      // Classify + embed + answer is three LLM calls; API Gateway tops out at 30s.
+      timeout: "30 seconds",
+      environment: {
+        DATABASE_URL: databaseUrl.value,
+        GEMINI_API_KEY: geminiApiKey.value,
+        DEMO_WORKSPACE_ID: "griot-web-demo",
+        CHAT_DAILY_CAP: "500",
+      },
+    });
 
     api.route("GET /health", {
       handler: "packages/slack/src/health.handler",
@@ -88,6 +105,8 @@ export default $config({
       installUrl: $interpolate`${api.url}/slack/install`,
       oauthRedirectUrl: $interpolate`${api.url}/slack/oauth_redirect`,
       healthUrl: $interpolate`${api.url}/health`,
+      // apps/web takes the API base as NUXT_PUBLIC_BASE_URL and POSTs to /chat
+      chatUrl: $interpolate`${api.url}/chat`,
     };
   },
 });

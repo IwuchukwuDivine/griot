@@ -46,7 +46,7 @@
 import { Github } from "lucide-vue-next";
 import { GITHUB_URL, HERO_CHAT } from "~/utils/constants/siteData";
 
-const slackInstallUrl = useRuntimeConfig().public.slackInstallUrl;
+const slackInstallUrl = useInstallUrl();
 </script>
 
 <style scoped>

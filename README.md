@@ -47,6 +47,15 @@ Memories don't just accumulate — they carry provenance and can be retired:
 - **Provenance** — every RAG answer stores exactly which knowledge chunks went into its prompt (id, snippet, similarity, when learned) on the reply's `messages` row. Ask *"why did you say that?"* and Griot cites its own memory instead of hand-waving.
 - **Supersession** — when the Conflict Guard flags a new decision, it records *which* memory it contradicts. Say *"replace the old rule"* and the old decision or fact is marked superseded (`superseded_at`, never deleted) and excluded from all retrieval — RAG, conflict matching, everything — from then on. The audit trail stays intact.
 
+## Surfaces
+
+The memory core is surface-agnostic — anything that can hit the API can talk to it:
+
+- **Slack** — the full experience: questions, decisions (with the Conflict Guard), todos, learning, provenance, summaries, deadline checks.
+- **Web chat** — a read-only demo on the landing page. A floating widget POSTs to `/chat`, which answers with the same RAG path (embed → vector match → grounded answer) against a dedicated, isolated demo workspace, and returns the knowledge chunks it used so the widget can render them as "memory chips". Write intents are politely declined; sessions are capped per visitor and per day. Seed its knowledge base with `npm run seed:demo` (facts live in `scripts/demo-kb.md`), then point the site at the deployed API via `NUXT_PUBLIC_BASE_URL`.
+
+The same pattern extends to any other surface — a WhatsApp bot or a customer-facing site widget is a thin adapter over the same memory store.
+
 ## Architecture
 
 ```mermaid

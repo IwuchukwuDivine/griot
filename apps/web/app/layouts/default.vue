@@ -3,6 +3,10 @@
     <SiteHeader />
     <slot />
     <SiteFooter />
+    <!-- Client-only: the widget keys its session off sessionStorage. -->
+    <ClientOnly>
+      <LazyChatWidget />
+    </ClientOnly>
   </div>
 </template>
 

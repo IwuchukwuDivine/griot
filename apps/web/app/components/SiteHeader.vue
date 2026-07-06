@@ -82,7 +82,7 @@
 import { Github, Menu, X } from "lucide-vue-next";
 import { GITHUB_URL, NAV_LINKS } from "~/utils/constants/siteData";
 
-const slackInstallUrl = useRuntimeConfig().public.slackInstallUrl;
+const slackInstallUrl = useInstallUrl();
 
 const menuOpen = ref(false);
 </script>

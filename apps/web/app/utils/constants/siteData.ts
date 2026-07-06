@@ -19,6 +19,13 @@ export const NAV_LINKS = [
   { label: "FAQ", href: "/#faq" },
 ] as const;
 
+/** Clickable openers for the demo chat widget. */
+export const CHAT_STARTER_QUESTIONS = [
+  "What is the Conflict Guard?",
+  "What do you remember?",
+  "How is my data isolated?",
+] as const;
+
 export const MEMORY_CARDS: MemoryCard[] = [
   {
     icon: "semantic",

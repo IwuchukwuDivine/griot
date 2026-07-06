@@ -73,10 +73,13 @@ export default defineNuxtConfig({
   // ── Env vars (mirror them in .env.example) ──
   runtimeConfig: {
     public: {
-      // Overridden by NUXT_PUBLIC_SLACK_INSTALL_URL — the "Add to Slack" href.
-      slackInstallUrl: "#",
-      // Overridden by NUXT_PUBLIC_SITE_URL — canonical base URL.
+      // Overridden by NUXT_PUBLIC_SITE_URL — canonical base URL of this site.
       siteUrl: "",
+      // Overridden by NUXT_PUBLIC_BASE_URL — the deployed API base (sst
+      // output `api`). Everything hangs off it: the "Add to Slack" href is
+      // `${baseUrl}/slack/install`, the demo chat POSTs to `${baseUrl}/chat`.
+      // Empty → install button falls back to "#" and the widget hides.
+      baseUrl: "",
     },
   },
 
