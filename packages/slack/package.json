@@ -12,6 +12,7 @@
     "typecheck": "tsc -b"
   },
   "dependencies": {
+    "@griot/agent": "*",
     "@griot/db": "*",
     "@slack/bolt": "^4.4.0",
     "pino": "^9.7.0"
