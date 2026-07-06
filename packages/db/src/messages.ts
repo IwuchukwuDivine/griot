@@ -1,0 +1,61 @@
+import { getPool } from "./pool.js";
+
+export interface MessageRow {
+  id: string;
+  workspace_id: string;
+  channel_id: string;
+  slack_event_id: string | null;
+  sender_id: string | null;
+  sender_name: string | null;
+  text: string | null;
+  is_bot: boolean;
+  created_at: Date;
+}
+
+export interface NewMessage {
+  workspaceId: string;
+  channelId: string;
+  /** Slack's event_id for deduping retried deliveries; null for our own replies. */
+  slackEventId?: string | null;
+  senderId?: string | null;
+  senderName?: string | null;
+  text: string;
+  isBot?: boolean;
+}
+
+/** Idempotent: a retried Slack delivery hits the unique event-id index and is dropped. */
+export async function insertMessage(message: NewMessage): Promise<void> {
+  await getPool().query(
+    `INSERT INTO messages
+       (workspace_id, channel_id, slack_event_id, sender_id, sender_name, text, is_bot)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT DO NOTHING`,
+    [
+      message.workspaceId,
+      message.channelId,
+      message.slackEventId ?? null,
+      message.senderId ?? null,
+      message.senderName ?? null,
+      message.text,
+      message.isBot ?? false,
+    ],
+  );
+}
+
+/** Last n messages in a channel, oldest first — ready to feed into a prompt. */
+export async function recentMessages(
+  workspaceId: string,
+  channelId: string,
+  n = 15,
+): Promise<MessageRow[]> {
+  const result = await getPool().query<MessageRow>(
+    `SELECT id, workspace_id, channel_id, slack_event_id, sender_id,
+            sender_name, text, is_bot, created_at
+       FROM messages
+      WHERE workspace_id = $1 AND channel_id = $2
+      ORDER BY created_at DESC
+      LIMIT $3`,
+    [workspaceId, channelId, n],
+  );
+  return result.rows.reverse();
+}

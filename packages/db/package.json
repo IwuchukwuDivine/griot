@@ -12,6 +12,7 @@
     "typecheck": "tsc -b"
   },
   "dependencies": {
+    "@griot/agent": "*",
     "pg": "^8.16.0",
     "pino": "^9.7.0"
   },
