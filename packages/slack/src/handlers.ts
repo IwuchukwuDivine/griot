@@ -23,14 +23,19 @@ import {
   insertKnowledge,
   insertTodo,
   latestDecision,
+  latestPendingConflict,
+  latestSourcedBotMessage,
   matchDecisions,
   matchKnowledge,
   openTodos,
   recentMessages,
+  setDecisionConflict,
   softDeleteDecision,
+  supersedeDecision,
+  supersedeKnowledge,
   updateTodo,
 } from "@griot/db";
-import type { TodoRow } from "@griot/db";
+import type { MessageSources, TodoRow } from "@griot/db";
 import { chunkText } from "./chunk.js";
 import { logger } from "./logger.js";
 
@@ -38,7 +43,8 @@ export interface HandlerContext {
   workspaceId: string;
   channelId: string;
   senderName: string;
-  reply: (text: string) => Promise<void>;
+  /** Sources, when given, are stored on the logged reply row (provenance). */
+  reply: (text: string, sources?: MessageSources) => Promise<void>;
 }
 
 const NO_OPEN_TASKS = "No open tasks 🎉";
@@ -115,7 +121,48 @@ export async function handleAnswer(
     }),
     model: "smart",
   });
-  await ctx.reply(answer);
+  // Provenance: exactly the chunks that went into the prompt, so "why did
+  // you say that?" can be answered honestly later.
+  await ctx.reply(answer, {
+    knowledge: matches.map((m) => ({
+      id: m.id,
+      source: m.source,
+      snippet: m.content.slice(0, 120),
+      similarity: m.similarity,
+      created_at: m.created_at.toISOString(),
+    })),
+    usedConversationWindow: true,
+  });
+}
+
+/**
+ * Provenance: explains the most recent answer that recorded its sources —
+ * which memories were quoted, how closely they matched, and when they were
+ * learned.
+ */
+export async function handleExplain(ctx: HandlerContext): Promise<void> {
+  const message = await latestSourcedBotMessage(ctx.workspaceId, ctx.channelId);
+  const sources = message?.sources;
+  if (!sources || sources.knowledge.length === 0) {
+    await ctx.reply(
+      "That one was just from the conversation — no stored knowledge involved.",
+    );
+    return;
+  }
+  const tz = resolveTz();
+  const dateFmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    month: "short",
+    day: "numeric",
+  });
+  const lines = sources.knowledge.map(
+    (s) =>
+      `- [${s.source} ${dateFmt.format(new Date(s.created_at))}] "${s.snippet}" (${Math.round(s.similarity * 100)}% match)`,
+  );
+  const tail = sources.usedConversationWindow
+    ? "\n...plus the recent conversation."
+    : "";
+  await ctx.reply(`That came from my memory:\n${lines.join("\n")}${tail}`);
 }
 
 /** RESEARCH: web-grounded findings via the provider's research capability. */
@@ -148,7 +195,7 @@ export async function handleDecision(
     matchKnowledge(ctx.workspaceId, embedding, 5),
     matchDecisions(ctx.workspaceId, embedding, 5),
   ]);
-  await insertDecision({
+  const decisionId = await insertDecision({
     workspaceId: ctx.workspaceId,
     content,
     decidedBy: ctx.senderName,
@@ -174,13 +221,58 @@ export async function handleDecision(
 
   if (/^ok[.!]?$/i.test(verdict)) {
     await ctx.reply("Logged ✅");
-  } else {
-    logger.info(
-      { workspaceId: ctx.workspaceId, intent: "DECISION" },
-      "conflict guard flagged a contradiction",
-    );
-    await ctx.reply(`Logged ✅\n\n⚠️ Heads-up: ${verdict}`);
+    return;
   }
+
+  logger.info(
+    { workspaceId: ctx.workspaceId, intent: "DECISION" },
+    "conflict guard flagged a contradiction",
+  );
+  // Remember which memory it clashed with — the closest vector match — so
+  // "replace the old rule" knows what to retire.
+  const topKnowledge = knowledgeMatches[0];
+  const topDecision = decisionMatches[0];
+  const conflict =
+    topKnowledge &&
+    (!topDecision || topKnowledge.similarity >= topDecision.similarity)
+      ? { knowledgeId: topKnowledge.id }
+      : topDecision
+        ? { decisionId: topDecision.id }
+        : null;
+  if (conflict) {
+    await setDecisionConflict(decisionId, ctx.workspaceId, conflict);
+  }
+  await ctx.reply(
+    `Logged ✅\n\n⚠️ Heads-up: ${verdict}\n\n_Say 'replace the old rule' if the new decision should supersede it._`,
+  );
+}
+
+/**
+ * Closes the Conflict Guard loop: retires the older memory a flagged
+ * decision conflicts with, so retrieval stops surfacing the dead rule.
+ */
+export async function handleSupersede(ctx: HandlerContext): Promise<void> {
+  const pending = await latestPendingConflict(ctx.workspaceId);
+  if (!pending) {
+    await ctx.reply("There's no conflicting rule waiting to be replaced.");
+    return;
+  }
+  const oldContent = pending.old_decision_id
+    ? await supersedeDecision(pending.old_decision_id, ctx.workspaceId, pending.id)
+    : pending.old_knowledge_id
+      ? await supersedeKnowledge(pending.old_knowledge_id, ctx.workspaceId)
+      : null;
+  if (!oldContent) {
+    await ctx.reply("There's no conflicting rule waiting to be replaced.");
+    return;
+  }
+  logger.info(
+    { workspaceId: ctx.workspaceId, decisionId: pending.id },
+    "superseded conflicting memory",
+  );
+  await ctx.reply(
+    `Done ✅ Retired: "${oldContent}"\nThe rule now: "${pending.content}"`,
+  );
 }
 
 /** Undo for episodic memory: soft-deletes the most recent decision. */
