@@ -40,6 +40,34 @@ export default $config({
       },
     });
 
+    // Scheduled rhythms — EventBridge cron expressions are UTC;
+    // Africa/Lagos is UTC+1 year-round (no DST).
+    const cronFunction = {
+      handler: "packages/slack/src/cron.handler",
+      runtime: "nodejs20.x" as const,
+      architecture: "arm64" as const,
+      timeout: "120 seconds" as const,
+      environment: {
+        SLACK_BOT_TOKEN: botToken.value,
+        DATABASE_URL: databaseUrl.value,
+        GEMINI_API_KEY: geminiApiKey.value,
+      },
+    };
+
+    // 18:00 Africa/Lagos, end of the workday
+    new sst.aws.Cron("DailySummary", {
+      schedule: "cron(0 17 * * ? *)",
+      function: cronFunction,
+      event: { job: "daily_summary" },
+    });
+
+    // 08:30 Africa/Lagos, morning deadline check
+    new sst.aws.Cron("DeadlineCheck", {
+      schedule: "cron(30 7 * * ? *)",
+      function: cronFunction,
+      event: { job: "deadline_check" },
+    });
+
     return {
       // Paste this into Slack → Event Subscriptions → Request URL
       slackEventsUrl: $interpolate`${api.url}/slack/events`,

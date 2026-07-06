@@ -16,7 +16,9 @@
     "build": "npm run build --workspaces",
     "typecheck": "npm run typecheck --workspaces",
     "dev": "npm run build && node --env-file=.env packages/slack/dist/dev.js",
-    "db:migrate": "npm run build -w @griot/db && node --env-file=.env packages/db/dist/migrate-cli.js"
+    "db:migrate": "npm run build -w @griot/db && node --env-file=.env packages/db/dist/migrate-cli.js",
+    "job:summary": "npm run build -w @griot/agent && node --env-file=.env packages/agent/dist/run-job.js daily_summary",
+    "job:deadline": "npm run build -w @griot/agent && node --env-file=.env packages/agent/dist/run-job.js deadline_check"
   },
   "devDependencies": {
     "@types/node": "^20.17.0",
