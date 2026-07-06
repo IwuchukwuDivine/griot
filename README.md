@@ -20,6 +20,8 @@ Griot lives in your Slack workspace. Teach it how your team works, and it answer
 | `@Griot the flyer is ready` | Matches the message against open todos and closes the right one |
 | `@Griot what's pending?` | Lists open tasks, soonest deadline first |
 | `@Griot research what similar tools charge per seat` | Looks it up with live web search (grounded) and replies with findings plus a Sources line |
+| `@Griot why did you say that?` | Explains its last answer's provenance — which stored memories it quoted, how closely they matched, and when they were learned |
+| `@Griot replace the old rule` | After the Conflict Guard flags a contradiction, retires the old rule so only the new decision is retrieved from then on |
 | *(automatic, evening)* | Posts a daily summary in every channel with real activity |
 | *(automatic, morning)* | Posts due-today and overdue task reminders where the tasks were created |
 
@@ -37,6 +39,13 @@ Four memory types, all in CockroachDB, all keyed by `workspace_id` — multi-ten
 | **Working** | `messages` | A rolling window of recent conversation per channel — including Griot's own replies, so multi-turn context and self-consistency survive |
 
 Every answer is assembled from semantic matches plus the working-memory window; every new decision is vector-matched against both knowledge and past decisions before Griot decides whether to warn.
+
+### Memory lifecycle
+
+Memories don't just accumulate — they carry provenance and can be retired:
+
+- **Provenance** — every RAG answer stores exactly which knowledge chunks went into its prompt (id, snippet, similarity, when learned) on the reply's `messages` row. Ask *"why did you say that?"* and Griot cites its own memory instead of hand-waving.
+- **Supersession** — when the Conflict Guard flags a new decision, it records *which* memory it contradicts. Say *"replace the old rule"* and the old decision or fact is marked superseded (`superseded_at`, never deleted) and excluded from all retrieval — RAG, conflict matching, everything — from then on. The audit trail stays intact.
 
 ## Architecture
 

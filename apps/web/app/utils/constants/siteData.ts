@@ -127,6 +127,18 @@ export const USAGE_EXAMPLES: UsageExample[] = [
     you: "@Griot what's pending?",
     griot: "Lists open tasks, soonest deadline first.",
   },
+  {
+    label: "Ask for provenance",
+    you: "@Griot why did you say that?",
+    griot:
+      "Explains its last answer's sources — which memories it quoted, match strength, and when they were learned.",
+  },
+  {
+    label: "Replace a rule",
+    you: "@Griot replace the old rule",
+    griot:
+      "Retires the old rule the Conflict Guard flagged — only the new decision is retrieved from then on.",
+  },
 ];
 
 export const AUTOMATIC_JOBS = [
