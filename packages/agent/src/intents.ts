@@ -6,6 +6,8 @@ export const INTENTS = [
   "TODO_DONE",
   "TODO_LIST",
   "RESEARCH",
+  "EXPLAIN",
+  "SUPERSEDE",
 ] as const;
 
 export type Intent = (typeof INTENTS)[number];
