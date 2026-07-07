@@ -31,21 +31,28 @@ export function useGriotChat() {
     turns.value.push({ role: "visitor", text: message });
     pending.value = true;
     try {
-      const response = await $fetch<{ reply: string; sources: ChatSource[] }>(
-        `${baseUrl}/chat`,
-        { method: "POST", body: { sessionId: sessionId(), message } },
-      );
+      // Plain fetch, not $fetch: HTTP errors don't throw here, so the
+      // backend's { error } bodies (rate limits, validation) always surface
+      // in Griot's voice regardless of status code.
+      const response = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sessionId: sessionId(), message }),
+      });
+      const body = (await response.json().catch(() => null)) as {
+        reply?: string;
+        sources?: ChatSource[];
+        error?: string;
+      } | null;
       turns.value.push({
         role: "griot",
-        text: response.reply,
-        sources: response.sources,
+        text: (response.ok ? body?.reply : body?.error) ?? FAILURE_REPLY,
+        sources: response.ok ? body?.sources : undefined,
       });
     } catch (error) {
-      // Rate-limit and validation replies arrive as { error } on a 4xx —
-      // deliver them in Griot's voice; anything else gets the napping line.
-      const data = (error as { data?: { error?: string } }).data;
+      // Only network/CORS failures land here now.
       console.error(error);
-      turns.value.push({ role: "griot", text: data?.error ?? FAILURE_REPLY });
+      turns.value.push({ role: "griot", text: FAILURE_REPLY });
     } finally {
       pending.value = false;
     }
